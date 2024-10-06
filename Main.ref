@@ -1,0 +1,147 @@
+*$FROM LibraryEx
+$EXTERN Map;
+
+
+*$FROM Raylib
+$EXTERN
+  InitWindow,
+  WindowShouldClose,
+  CloseWindow,
+  BeginDrawing,
+  EndDrawing,
+  ClearBackground,
+  DrawText,
+  DrawRectangle,
+  GetFrameTime,
+  SetTargetFPS,
+  IsMouseButtonPressed,
+  GetMousePosition,
+  GetRandomValue;
+
+
+WIDTH { = 800 }
+HEIGHT { = 600 }
+BOX_SIZE { = 50 }
+
+RAYWHITE { = (245 245 245 255) }
+NICEDARK { = (24 24 24 255) }
+
+MOUSE_LEFT_BUTTON { = 0 }
+MOUSE_RIGHT_BUTTON { = 1 }
+MOUSE_MIDDLE_BUTTON { = 2 }
+
+COLORS {
+  0 = (253 249 0 255);
+  1 = (0 228 48 255);
+  2 = (255 161 0 255);
+  3 = (102 191 255 255);
+  4 = (230 41 55 255);
+  5 = (190 33 55 255);
+  6 = (255 203 0 255);
+  7 = (0 158 47 255);
+  8 = (0 117 44 255);
+  9 = (255 109 194 255);
+  10 = (0 121 241 255);
+  11 = (112 31 126 255);
+  12 = (200 122 255 255);
+  13 = (135 60 190 255);
+  14 = (0 82 172 255);
+}
+
+
+$ENTRY Go {
+  = <InitWindow 800 600 'Hello, Refal!'> :
+  = <SetTargetFPS 60> :
+  = <Loop
+    ((50) (50) (1) (1) <GetRandomColor>)
+    ((50) (150) (1) (1) <GetRandomColor>)
+  >;
+}
+
+
+GetRandomColor {
+  = <COLORS <GetRandomValue 0 14>>;
+}
+
+
+GetRandomVelocity {
+  = <GetRandomValue 0 1> <GetRandomValue 0 1> : {
+    0 0 = (1) (1);
+    0 1 = (1) ('-' 1);
+    1 0 = ('-' 1) (1);
+    1 1 = ('-' 1) ('-' 1);
+  };
+}
+
+
+Loop {
+  e.Boxes
+    = <WindowShouldClose> : {
+      0 = <Loop <DrawFrame e.Boxes>>;
+      1 = <CloseWindow>;
+    };
+}
+
+
+DrawFrame {
+  e.Boxes
+    = <ClearBackground <NICEDARK>> :
+    = <DrawText
+      'This example is written in Refal language and uses Raylib library'
+      40 40 20 <RAYWHITE>
+    > :
+    = <Map &DrawBox e.Boxes> : e.Boxes^
+    = <EndDrawing> :
+    = <IsMouseButtonPressed <MOUSE_LEFT_BUTTON>> : {
+      0 = e.Boxes;
+      1
+        = <GetMousePosition> : s.X s.Y
+        = ((s.X) (s.Y) <GetRandomVelocity> <GetRandomColor>) e.Boxes;
+    };
+}
+
+
+DrawBox {
+  ((e.X) (e.Y) (e.VX) (e.VY) t.Color)
+    = <DrawRectangle e.X e.Y <BOX_SIZE> <BOX_SIZE> t.Color> :
+    = <Move (e.X) (e.Y) (e.VX) (e.VY) 4> : (e.X^) (e.Y^) (e.nVX) (e.nVY)
+    = <{ (e.nVX) (e.nVY) = t.Color; e._ e._ = <GetRandomColor> } (e.VX) (e.VY)> : t.Color^
+    = ((e.X) (e.Y) (e.nVX) (e.nVY) t.Color);
+}
+
+
+CollisionX {
+  (e.X) (e.VX), <Compare (e.X) 0> : '-'
+    = (0) (<Neg e.VX>);
+
+  (e.X) (e.VX), <Compare (e.X) <Sub <WIDTH> <BOX_SIZE>>> : '+'
+    = (<Sub <WIDTH> <BOX_SIZE>>) (<Neg e.VX>);
+
+  (e.X) (e.VX) = (e.X) (e.VX);
+}
+
+
+CollisionY {
+  (e.Y) (e.VY), <Compare (e.Y) 0> : '-'
+    = (0) (<Neg e.VY>);
+
+  (e.Y) (e.VY), <Compare (e.Y) <Sub <HEIGHT> <BOX_SIZE>>> : '+'
+    = (<Sub <HEIGHT> <BOX_SIZE>>) (<Neg e.VY>);
+
+  (e.Y) (e.VY) = (e.Y) (e.VY);
+}
+
+
+Move {
+  (e.X) (e.Y) (e.VX) (e.VY) s.DT
+    = <Add (e.X) <Mul (e.VX) s.DT>> : e.X^
+    = <Add (e.Y) <Mul (e.VY) s.DT>> : e.Y^
+    = <CollisionX (e.X) (e.VX)> : (e.X^) (e.VX^)
+    = <CollisionY (e.Y) (e.VY)> : (e.Y^) (e.VY^)
+    = (e.X) (e.Y) (e.VX) (e.VY);
+}
+
+
+Neg {
+  e.X = <Sub 0 e.X>;
+}
