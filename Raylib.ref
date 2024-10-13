@@ -302,6 +302,54 @@ DrawRectangle-Aux {
 }
 
 
+$ENTRY DrawLine {
+  s.StartX s.StartY s.EndX s.EndY (s.R s.G s.B s.A) = <DrawLine-Aux s.StartX s.StartY s.EndX s.EndY s.R s.G s.B s.A>;
+}
+
+
+DrawLine-Aux {
+%%
+  refalrts::Iter content_b = 0;
+  refalrts::Iter content_e = 0;
+  refalrts::Iter func_ptr = refalrts::call_left(content_b, content_e, arg_begin, arg_end);
+
+  // int startPosX, int startPosY, int endPosX, int endPosY, Color color
+  refalrts::Iter startPosXP = content_b;
+  refalrts::Iter startPosYP = startPosXP->next;
+  refalrts::Iter endPosXP = startPosYP->next;
+  refalrts::Iter endPosYP = endPosXP->next;
+
+  if (
+    refalrts::cDataNumber != startPosXP->tag ||
+    refalrts::cDataNumber != startPosYP->tag ||
+    refalrts::cDataNumber != endPosXP->tag ||
+    refalrts::cDataNumber != endPosYP->tag
+  ) {
+    return refalrts::cRecognitionImpossible;
+  }
+
+  const int startPosX = startPosXP->number_info;
+  const int startPosY = startPosYP->number_info;
+  const int endPosX = endPosXP->number_info;
+  const int endPosY = endPosYP->number_info;
+
+  PARSE_COLOR(endPosYP->next);
+
+  DrawLine(
+    startPosX,
+    startPosY,
+    endPosX,
+    endPosY,
+    CLITERAL(Color){ r, g, b, a }
+  );
+
+  refalrts::reset_allocator(vm);
+  refalrts::splice_to_freelist(vm, arg_begin, arg_end);
+  return refalrts::cSuccess;
+%%
+}
+
+
 $ENTRY GetFrameTime {
 %%
   refalrts::Iter content_b = 0;
